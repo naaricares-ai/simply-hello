@@ -45,10 +45,10 @@ const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .maybeSingle();
+      .limit(1);
 
-    if (error || !data) return null;
-    return data.role as UserRole;
+    if (error || !data || data.length === 0) return null;
+    return data[0].role as UserRole;
   } catch {
     return null;
   }
