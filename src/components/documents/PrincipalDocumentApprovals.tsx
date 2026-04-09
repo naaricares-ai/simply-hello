@@ -68,7 +68,7 @@ export function PrincipalDocumentApprovals() {
     queryKey: ['principal-doc-requests-pending'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .select('*, students:student_id (full_name, admission_number, classes:class_id (name, section))')
         .eq('current_stage', 'principal_review')
         .order('forwarded_to_principal_at', { ascending: true });
@@ -81,7 +81,7 @@ export function PrincipalDocumentApprovals() {
     queryKey: ['principal-doc-requests-signed'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .select('*, students:student_id (full_name, admission_number, classes:class_id (name, section))')
         .not('principal_signed_at', 'is', null)
         .order('principal_signed_at', { ascending: false });
@@ -168,13 +168,13 @@ export function PrincipalDocumentApprovals() {
 
       // Find the assigned clerk to notify
       const { data: reqFull } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .select('assigned_clerk_id, teachers!assigned_clerk_id (user_id)')
         .eq('id', req.id)
         .maybeSingle();
 
       const { error } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .update({
           current_stage: 'clerk_issuing',
           principal_signed_at: new Date().toISOString(),
@@ -187,7 +187,7 @@ export function PrincipalDocumentApprovals() {
         .eq('id', req.id);
       if (error) throw error;
 
-      await supabase.from('document_request_history').insert({
+      await supabase.from('document_request_history' as any).insert({
         document_request_id: req.id,
         stage_from: 'principal_review',
         stage_to: 'clerk_issuing',
@@ -228,13 +228,13 @@ export function PrincipalDocumentApprovals() {
       if (!returnReason.trim()) throw new Error('Please enter a reason');
 
       const { data: reqFull } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .select('assigned_clerk_id, teachers!assigned_clerk_id (user_id)')
         .eq('id', req.id)
         .maybeSingle();
 
       const { error } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .update({
           current_stage: 'clerk_review',
           clerk_note: `Returned by Principal: ${returnReason.trim()}`,
@@ -242,7 +242,7 @@ export function PrincipalDocumentApprovals() {
         .eq('id', req.id);
       if (error) throw error;
 
-      await supabase.from('document_request_history').insert({
+      await supabase.from('document_request_history' as any).insert({
         document_request_id: req.id,
         stage_from: 'principal_review',
         stage_to: 'clerk_review',

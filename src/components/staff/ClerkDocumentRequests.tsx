@@ -65,7 +65,7 @@ export function ClerkDocumentRequests() {
       if (!currentEmployee?.id) return [];
       const selectQuery: string = '*, students:student_id (full_name, admission_number, class_id, classes:class_id (name, section)), parents:parent_id (name, contact_number)';
       const { data, error } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .select(selectQuery)
         .eq('assigned_clerk_id', currentEmployee.id)
         .eq('current_stage', 'clerk_review')
@@ -82,7 +82,7 @@ export function ClerkDocumentRequests() {
       if (!currentEmployee?.id) return [];
       const selectQuery: string = '*, students:student_id (full_name, admission_number, class_id, classes:class_id (name, section)), parents:parent_id (name, contact_number)';
       const { data, error } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .select(selectQuery)
         .eq('assigned_clerk_id', currentEmployee.id)
         .eq('current_stage', 'clerk_issuing')
@@ -99,7 +99,7 @@ export function ClerkDocumentRequests() {
       if (!currentEmployee?.id) return [];
       const selectQuery: string = '*, students:student_id (full_name, admission_number, class_id, classes:class_id (name, section)), parents:parent_id (name, contact_number)';
       let q = supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .select(selectQuery)
         .eq('assigned_clerk_id', currentEmployee.id)
         .order('requested_at', { ascending: false });
@@ -123,7 +123,7 @@ export function ClerkDocumentRequests() {
         .maybeSingle();
 
       const { error } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .update({
           current_stage: 'principal_review',
           forwarded_to_principal_at: new Date().toISOString(),
@@ -134,7 +134,7 @@ export function ClerkDocumentRequests() {
       if (error) throw error;
 
       // Insert history row
-      await supabase.from('document_request_history').insert({
+      await supabase.from('document_request_history' as any).insert({
         document_request_id: req.id,
         stage_from: 'clerk_review',
         stage_to: 'principal_review',
@@ -177,7 +177,7 @@ export function ClerkDocumentRequests() {
         .maybeSingle();
 
       const { error } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .update({
           current_stage: 'ready',
           status: 'ready',
@@ -189,7 +189,7 @@ export function ClerkDocumentRequests() {
       if (error) throw error;
 
       // Insert history
-      await supabase.from('document_request_history').insert({
+      await supabase.from('document_request_history' as any).insert({
         document_request_id: req.id,
         stage_from: 'clerk_issuing',
         stage_to: 'ready',
