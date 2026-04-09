@@ -10,46 +10,10 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.5"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
-      activity_log: {
-        Row: {
-          action_type: string
-          created_at: string
-          id: string
-          ip_address: string | null
-          module: string
-          performed_by_name: string
-          performed_by_role: string
-          performed_by_user_id: string | null
-          record_affected: string | null
-        }
-        Insert: {
-          action_type: string
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          module: string
-          performed_by_name?: string
-          performed_by_role?: string
-          performed_by_user_id?: string | null
-          record_affected?: string | null
-        }
-        Update: {
-          action_type?: string
-          created_at?: string
-          id?: string
-          ip_address?: string | null
-          module?: string
-          performed_by_name?: string
-          performed_by_role?: string
-          performed_by_user_id?: string | null
-          record_affected?: string | null
-        }
-        Relationships: []
-      }
       activity_logs: {
         Row: {
           action_type: string
@@ -1177,7 +1141,7 @@ export type Database = {
             foreignKeyName: "teacher_attendance_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
-            referencedRelation: "employees"
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
