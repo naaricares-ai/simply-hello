@@ -108,7 +108,7 @@ function LoadingScreen() {
 // Error boundary for catching render errors
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode; fallback?: React.ReactNode },
-  { hasError: boolean }
+  { hasError: boolean; error?: Error }
 > {
   constructor(props: any) {
     super(props);

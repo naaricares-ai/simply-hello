@@ -62,7 +62,7 @@ export default function ParentDocuments() {
     queryFn: async () => {
       if (!selectedChild?.id || !parentRecord?.id) return [];
       const { data, error } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .select('*')
         .eq('student_id', selectedChild.id)
         .eq('parent_id', parentRecord.id)
@@ -88,7 +88,7 @@ export default function ParentDocuments() {
 
       // Step 3: Create the document request
       const { data: newRequest, error: insertError } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .insert({
           student_id: selectedChild.id,
           parent_id: parentRecord.id,
@@ -112,9 +112,9 @@ export default function ParentDocuments() {
 
       // Step 4: Insert into document_request_history
       await supabase
-        .from('document_request_history')
+        .from('document_request_history' as any)
         .insert({
-          document_request_id: newRequest.id,
+          document_request_id: (newRequest as any).id,
           stage_from: 'none',
           stage_to: stage,
           action_taken_by_user_id: parentRecord.user_id,
@@ -150,7 +150,7 @@ export default function ParentDocuments() {
   const markDownloaded = useMutation({
     mutationFn: async (req: any) => {
       const { error } = await supabase
-        .from('document_requests')
+        .from('document_requests' as any)
         .update({
           status: 'downloaded',
           current_stage: 'downloaded',
@@ -161,7 +161,7 @@ export default function ParentDocuments() {
       if (error) throw error;
 
       // History entry
-      await supabase.from('document_request_history').insert({
+      await supabase.from('document_request_history' as any).insert({
         document_request_id: req.id,
         stage_from: 'ready',
         stage_to: 'downloaded',

@@ -73,8 +73,8 @@ export default function TeacherRemarks() {
     let cancelled = false;
     const fetchEmployee = async () => {
       if (!user?.id) return;
-      const { data: emp } = await supabase
-        .from('employees')
+      const { data: emp } = await (supabase as any)
+        .from('teachers')
         .select('id')
         .eq('user_id', user.id)
         .maybeSingle();
