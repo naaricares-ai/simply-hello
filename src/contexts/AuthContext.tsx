@@ -16,9 +16,16 @@ export type UserRole =
   | 'staff'
   | 'principal';
 
+interface UserProfile {
+  fullName: string;
+  full_name: string;
+  email: string;
+}
+
 interface AuthContextType {
   user: any;
   role: UserRole | null;
+  profile: UserProfile | null;
   isAuthenticated: boolean;
   authInitialized: boolean;
   login: (
@@ -50,6 +57,7 @@ const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<UserRole | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authInitialized, setAuthInitialized] = useState(false);
 
@@ -102,10 +110,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Valid session and role — set authenticated state
+        // Fetch profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
         if (mounted.current && !initDone.current) {
           initDone.current = true;
           setUser(session.user);
           setRole(userRole);
+          setProfile(profileData ? { fullName: profileData.full_name, full_name: profileData.full_name, email: profileData.email } : null);
           setIsAuthenticated(true);
           setAuthInitialized(true);
         }
@@ -143,6 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (event === 'SIGNED_OUT') {
         setUser(null);
         setRole(null);
+        setProfile(null);
         setIsAuthenticated(false);
         return;
       }
@@ -185,8 +202,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
       }
 
+      // Fetch profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('full_name, email')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+
       setUser(data.user);
       setRole(userRole);
+      setProfile(profileData ? { fullName: profileData.full_name, full_name: profileData.full_name, email: profileData.email } : null);
       setIsAuthenticated(true);
 
       return { error: null, role: userRole };
@@ -199,6 +224,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Clear state immediately
     setUser(null);
     setRole(null);
+    setProfile(null);
     setIsAuthenticated(false);
 
     try {
@@ -219,6 +245,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         role,
+        profile,
         isAuthenticated,
         authInitialized,
         login,

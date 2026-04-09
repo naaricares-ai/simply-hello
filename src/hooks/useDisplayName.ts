@@ -26,21 +26,8 @@ export const useDisplayName = () => {
           return;
         }
 
-        // Source 2: employees table (for teachers, staff, principal)
+        // Source 2: teachers table (for teachers, staff, principal)
         if (role === 'teacher' || role === 'staff' || role === 'principal') {
-          const { data: emp } = await supabase
-            .from('employees')
-            .select('full_name')
-            .eq('user_id', user.id)
-            .maybeSingle();
-
-          if (!cancelled && emp?.full_name) {
-            setDisplayName(emp.full_name);
-            setLoading(false);
-            return;
-          }
-
-          // Source 3: teachers table
           const { data: teacher } = await supabase
             .from('teachers')
             .select('full_name')
