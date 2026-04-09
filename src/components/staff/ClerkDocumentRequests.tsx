@@ -71,7 +71,7 @@ export function ClerkDocumentRequests() {
         .eq('current_stage', 'clerk_review')
         .order('requested_at', { ascending: false });
       if (error) throw error;
-      return (data || []) as DocRequest[];
+      return (data || []) as unknown as DocRequest[];
     },
     enabled: !!currentEmployee?.id,
   });
@@ -88,7 +88,7 @@ export function ClerkDocumentRequests() {
         .eq('current_stage', 'clerk_issuing')
         .order('requested_at', { ascending: false });
       if (error) throw error;
-      return (data || []) as DocRequest[];
+      return (data || []) as unknown as DocRequest[];
     },
     enabled: !!currentEmployee?.id,
   });
@@ -106,7 +106,7 @@ export function ClerkDocumentRequests() {
       if (stageFilter !== 'all') q = q.eq('current_stage', stageFilter);
       const { data, error } = await q;
       if (error) throw error;
-      return (data || []) as DocRequest[];
+      return (data || []) as unknown as DocRequest[];
     },
     enabled: !!currentEmployee?.id,
   });
