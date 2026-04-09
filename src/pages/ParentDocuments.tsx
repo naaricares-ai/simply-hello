@@ -114,7 +114,7 @@ export default function ParentDocuments() {
       await supabase
         .from('document_request_history' as any)
         .insert({
-          document_request_id: newRequest.id,
+          document_request_id: (newRequest as any).id,
           stage_from: 'none',
           stage_to: stage,
           action_taken_by_user_id: parentRecord.user_id,

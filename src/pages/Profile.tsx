@@ -57,7 +57,7 @@ export default function Profile() {
     if (profile) {
       setFormData({
         full_name: profile.fullName || '',
-        phone: profile.phone || '',
+        phone: (profile as any)?.phone || '',
         address: (currentTeacher as any)?.address || '',
         qualification: currentTeacher?.qualification || '',
       });
