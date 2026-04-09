@@ -10,53 +10,53 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { SuperAdminLayout } from "@/components/layout/SuperAdminLayout";
 import { ParentLayout } from "@/components/layout/ParentLayout";
 import { StaffLayout } from "@/components/layout/StaffLayout";
-import React from "react";
+import React, { lazy, Suspense } from "react";
 
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import DashboardTeacher from "./pages/DashboardTeacher";
-import Students from "./pages/Students";
-import StaffManagement from "./pages/StaffManagement";
-import Attendance from "./pages/Attendance";
-import Homework from "./pages/Homework";
-import Timetable from "./pages/Timetable";
-import Salary from "./pages/Salary";
-import Settings from "./pages/Settings";
-import Notices from "./pages/Notices";
-import Profile from "./pages/Profile";
-import EmailCenter from "./pages/EmailCenter";
-import EmailLogs from "./pages/EmailLogs";
-import Documents from "./pages/Documents";
-import Events from "./pages/Events";
-import Leaves from "./pages/Leaves";
-import Issues from "./pages/Issues";
-import SuperAdminDashboard from "./pages/SuperAdminDashboard";
-import SuperAdminPrivileges from "./pages/SuperAdminPrivileges";
-import ParentDashboard from "./pages/ParentDashboard";
-import ParentAttendance from "./pages/ParentAttendance";
-import ParentHomework from "./pages/ParentHomework";
-import ParentLeave from "./pages/ParentLeave";
-import ParentRemarks from "./pages/ParentRemarks";
-import ParentDocuments from "./pages/ParentDocuments";
-import DashboardStaff from "./pages/DashboardStaff";
-import FeeManagement from "./pages/FeeManagement";
-import Announcements from "./pages/Announcements";
-import Reports from "./pages/Reports";
-import ParentFees from "./pages/ParentFees";
-import ParentTimetable from "./pages/ParentTimetable";
-import NotFound from "./pages/NotFound";
-import PrincipalStaffManagement from "./pages/PrincipalStaffManagement";
-import TeacherLeaveRequests from "./pages/TeacherLeaveRequests";
-import ClerkDocumentRequestsPage from "./pages/staff/ClerkDocumentRequestsPage";
-import PrincipalDocumentApprovals from "./pages/principal/PrincipalDocumentApprovals";
-import StudyMaterials from "./pages/StudyMaterials";
-import ParentStudyMaterials from "./pages/ParentStudyMaterials";
-import ParentAnalytics from "./pages/ParentAnalytics";
-import TeacherRemarks from "./pages/teacher/TeacherRemarks";
-import SchoolSettingsPage from "./pages/principal/SchoolSettingsPage";
-
-import { Loader2 } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
+
+// Lazy load all pages for code splitting & faster initial load
+const Login = lazy(() => import("./pages/Login"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const DashboardTeacher = lazy(() => import("./pages/DashboardTeacher"));
+const Students = lazy(() => import("./pages/Students"));
+const StaffManagement = lazy(() => import("./pages/StaffManagement"));
+const Attendance = lazy(() => import("./pages/Attendance"));
+const Homework = lazy(() => import("./pages/Homework"));
+const Timetable = lazy(() => import("./pages/Timetable"));
+const Salary = lazy(() => import("./pages/Salary"));
+const Settings = lazy(() => import("./pages/Settings"));
+const Notices = lazy(() => import("./pages/Notices"));
+const Profile = lazy(() => import("./pages/Profile"));
+const EmailCenter = lazy(() => import("./pages/EmailCenter"));
+const EmailLogs = lazy(() => import("./pages/EmailLogs"));
+const Documents = lazy(() => import("./pages/Documents"));
+const Events = lazy(() => import("./pages/Events"));
+const Leaves = lazy(() => import("./pages/Leaves"));
+const Issues = lazy(() => import("./pages/Issues"));
+const SuperAdminDashboard = lazy(() => import("./pages/SuperAdminDashboard"));
+const SuperAdminPrivileges = lazy(() => import("./pages/SuperAdminPrivileges"));
+const ParentDashboard = lazy(() => import("./pages/ParentDashboard"));
+const ParentAttendance = lazy(() => import("./pages/ParentAttendance"));
+const ParentHomework = lazy(() => import("./pages/ParentHomework"));
+const ParentLeave = lazy(() => import("./pages/ParentLeave"));
+const ParentRemarks = lazy(() => import("./pages/ParentRemarks"));
+const ParentDocuments = lazy(() => import("./pages/ParentDocuments"));
+const DashboardStaff = lazy(() => import("./pages/DashboardStaff"));
+const FeeManagement = lazy(() => import("./pages/FeeManagement"));
+const Announcements = lazy(() => import("./pages/Announcements"));
+const Reports = lazy(() => import("./pages/Reports"));
+const ParentFees = lazy(() => import("./pages/ParentFees"));
+const ParentTimetable = lazy(() => import("./pages/ParentTimetable"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const PrincipalStaffManagement = lazy(() => import("./pages/PrincipalStaffManagement"));
+const TeacherLeaveRequests = lazy(() => import("./pages/TeacherLeaveRequests"));
+const ClerkDocumentRequestsPage = lazy(() => import("./pages/staff/ClerkDocumentRequestsPage"));
+const PrincipalDocumentApprovals = lazy(() => import("./pages/principal/PrincipalDocumentApprovals"));
+const StudyMaterials = lazy(() => import("./pages/StudyMaterials"));
+const ParentStudyMaterials = lazy(() => import("./pages/ParentStudyMaterials"));
+const ParentAnalytics = lazy(() => import("./pages/ParentAnalytics"));
+const TeacherRemarks = lazy(() => import("./pages/teacher/TeacherRemarks"));
+const SchoolSettingsPage = lazy(() => import("./pages/principal/SchoolSettingsPage"));
 
 const handleGlobalError = (error: any) => {
   const isAuthError =
@@ -85,17 +85,25 @@ const queryClient = new QueryClient({
         return failureCount < 2;
       },
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 10000),
-      staleTime: 1000 * 60 * 2,       // 2 minutes — data considered fresh
-      gcTime: 1000 * 60 * 10,         // 10 minutes — keep in cache even if unused
-      refetchOnWindowFocus: true,     // re-fetch when tab regains focus
-      refetchOnMount: true,           // always refetch when component mounts if stale
-      refetchOnReconnect: true,       // re-fetch after network reconnects
+      staleTime: 1000 * 60 * 2,
+      gcTime: 1000 * 60 * 10,
+      refetchOnWindowFocus: true,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
     },
     mutations: {
-      retry: 0,                       // don't retry mutations automatically
+      retry: 0,
     },
   },
 });
+
+function PageLoader() {
+  return (
+    <div className="min-h-[40vh] flex items-center justify-center">
+      <Loader />
+    </div>
+  );
+}
 
 function LoadingScreen() {
   return (
@@ -155,106 +163,105 @@ function RoleBasedRedirect() {
   return <Navigate to="/login" replace />;
 }
 
-
 function AppRoutes() {
   const { authInitialized } = useAuth();
   if (!authInitialized) return <LoadingScreen />;
 
-
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      {/* Super Admin routes */}
-      <Route
-        path="/super-admin"
-        element={
-          <ProtectedRoute allowedRoles={["super_admin"]}>
-            <SuperAdminLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
-        <Route path="dashboard" element={<SuperAdminDashboard />} />
-        <Route path="privileges" element={<SuperAdminPrivileges />} />
-      </Route>
-      {/* Parent routes */}
-      <Route
-        path="/parent"
-        element={
-          <ProtectedRoute allowedRoles={["parent"]}>
-            <ParentLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Navigate to="/parent/dashboard" replace />} />
-        <Route path="dashboard" element={<ParentDashboard />} />
-        <Route path="homework" element={<ParentHomework />} />
-        <Route path="attendance" element={<ParentAttendance />} />
-        <Route path="leave" element={<ParentLeave />} />
-        <Route path="remarks" element={<ParentRemarks />} />
-        <Route path="fees" element={<ParentFees />} />
-        <Route path="timetable" element={<ParentTimetable />} />
-        <Route path="documents" element={<ParentDocuments />} />
-        <Route path="study-materials" element={<ParentStudyMaterials />} />
-        <Route path="analytics" element={<ParentAnalytics />} />
-      </Route>
-      {/* Staff employee portal routes */}
-      <Route
-        path="/dashboard-staff"
-        element={
-          <ProtectedRoute allowedRoles={["staff"]}>
-            <StaffLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<DashboardStaff />} />
-        <Route path="leaves" element={<Leaves />} />
-        <Route path="issues" element={<Issues />} />
-        <Route path="salary" element={<Salary />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="document-requests" element={<ClerkDocumentRequestsPage />} />
-        <Route path="student-records" element={<Students />} />
-      </Route>
-      {/* Admin & Teacher routes */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute allowedRoles={["principal", "teacher"]}>
-            <DashboardLayout />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<RoleBasedRedirect />} />
-        <Route path="dashboard" element={<ProtectedRoute allowedRoles={["admin", "principal"] as any}><Dashboard /></ProtectedRoute>} />
-
-        <Route path="dashboard-teacher" element={<ProtectedRoute allowedRoles={["teacher"]}><DashboardTeacher /></ProtectedRoute>} />
-        <Route path="students" element={<ProtectedRoute allowedRoles={["principal"]}><Students /></ProtectedRoute>} />
-        <Route path="staff" element={<ProtectedRoute allowedRoles={["principal"]}><StaffManagement /></ProtectedRoute>} />
-        <Route path="staff-management" element={<ProtectedRoute allowedRoles={["principal"]}><PrincipalStaffManagement /></ProtectedRoute>} />
-        <Route path="attendance" element={<Attendance />} />
-        <Route path="homework" element={<ProtectedRoute allowedRoles={["teacher"]}><Homework /></ProtectedRoute>} />
-        <Route path="study-materials" element={<ProtectedRoute allowedRoles={["teacher"]}><StudyMaterials /></ProtectedRoute>} />
-        <Route path="remarks" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherRemarks /></ProtectedRoute>} />
-        <Route path="leaves" element={<Leaves />} />
-        <Route path="class-leaves" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherLeaveRequests /></ProtectedRoute>} />
-        <Route path="issues" element={<Issues />} />
-        <Route path="timetable" element={<Timetable />} />
-        <Route path="notices" element={<ProtectedRoute allowedRoles={["teacher"]}><Notices /></ProtectedRoute>} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="email-center" element={<ProtectedRoute allowedRoles={["principal"]}><EmailCenter /></ProtectedRoute>} />
-        <Route path="email-logs" element={<ProtectedRoute allowedRoles={["principal"]}><EmailLogs /></ProtectedRoute>} />
-        <Route path="documents" element={<ProtectedRoute allowedRoles={["principal"]}><Documents /></ProtectedRoute>} />
-        <Route path="document-approvals" element={<ProtectedRoute allowedRoles={["principal"]}><PrincipalDocumentApprovals /></ProtectedRoute>} />
-        <Route path="events" element={<ProtectedRoute allowedRoles={["principal"]}><Events /></ProtectedRoute>} />
-        <Route path="announcements" element={<ProtectedRoute allowedRoles={["principal"]}><Announcements /></ProtectedRoute>} />
-        <Route path="reports" element={<ProtectedRoute allowedRoles={["principal"]}><Reports /></ProtectedRoute>} />
-        <Route path="settings" element={<ProtectedRoute allowedRoles={["principal"]}><Settings /></ProtectedRoute>} />
-        <Route path="school-settings" element={<ProtectedRoute allowedRoles={["principal"]}><SchoolSettingsPage /></ProtectedRoute>} />
-      </Route>
-      {/* Legacy redirects */}
-      <Route path="/teachers" element={<Navigate to="/staff" replace />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        {/* Super Admin routes */}
+        <Route
+          path="/super-admin"
+          element={
+            <ProtectedRoute allowedRoles={["super_admin"]}>
+              <SuperAdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
+          <Route path="dashboard" element={<SuperAdminDashboard />} />
+          <Route path="privileges" element={<SuperAdminPrivileges />} />
+        </Route>
+        {/* Parent routes */}
+        <Route
+          path="/parent"
+          element={
+            <ProtectedRoute allowedRoles={["parent"]}>
+              <ParentLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/parent/dashboard" replace />} />
+          <Route path="dashboard" element={<ParentDashboard />} />
+          <Route path="homework" element={<ParentHomework />} />
+          <Route path="attendance" element={<ParentAttendance />} />
+          <Route path="leave" element={<ParentLeave />} />
+          <Route path="remarks" element={<ParentRemarks />} />
+          <Route path="fees" element={<ParentFees />} />
+          <Route path="timetable" element={<ParentTimetable />} />
+          <Route path="documents" element={<ParentDocuments />} />
+          <Route path="study-materials" element={<ParentStudyMaterials />} />
+          <Route path="analytics" element={<ParentAnalytics />} />
+        </Route>
+        {/* Staff employee portal routes */}
+        <Route
+          path="/dashboard-staff"
+          element={
+            <ProtectedRoute allowedRoles={["staff"]}>
+              <StaffLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<DashboardStaff />} />
+          <Route path="leaves" element={<Leaves />} />
+          <Route path="issues" element={<Issues />} />
+          <Route path="salary" element={<Salary />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="document-requests" element={<ClerkDocumentRequestsPage />} />
+          <Route path="student-records" element={<Students />} />
+        </Route>
+        {/* Admin & Teacher routes */}
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute allowedRoles={["principal", "teacher"]}>
+              <DashboardLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<RoleBasedRedirect />} />
+          <Route path="dashboard" element={<ProtectedRoute allowedRoles={["admin", "principal"] as any}><Dashboard /></ProtectedRoute>} />
+          <Route path="dashboard-teacher" element={<ProtectedRoute allowedRoles={["teacher"]}><DashboardTeacher /></ProtectedRoute>} />
+          <Route path="students" element={<ProtectedRoute allowedRoles={["principal"]}><Students /></ProtectedRoute>} />
+          <Route path="staff" element={<ProtectedRoute allowedRoles={["principal"]}><StaffManagement /></ProtectedRoute>} />
+          <Route path="staff-management" element={<ProtectedRoute allowedRoles={["principal"]}><PrincipalStaffManagement /></ProtectedRoute>} />
+          <Route path="attendance" element={<Attendance />} />
+          <Route path="homework" element={<ProtectedRoute allowedRoles={["teacher"]}><Homework /></ProtectedRoute>} />
+          <Route path="study-materials" element={<ProtectedRoute allowedRoles={["teacher"]}><StudyMaterials /></ProtectedRoute>} />
+          <Route path="remarks" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherRemarks /></ProtectedRoute>} />
+          <Route path="leaves" element={<Leaves />} />
+          <Route path="class-leaves" element={<ProtectedRoute allowedRoles={["teacher"]}><TeacherLeaveRequests /></ProtectedRoute>} />
+          <Route path="issues" element={<Issues />} />
+          <Route path="timetable" element={<Timetable />} />
+          <Route path="notices" element={<ProtectedRoute allowedRoles={["teacher"]}><Notices /></ProtectedRoute>} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="email-center" element={<ProtectedRoute allowedRoles={["principal"]}><EmailCenter /></ProtectedRoute>} />
+          <Route path="email-logs" element={<ProtectedRoute allowedRoles={["principal"]}><EmailLogs /></ProtectedRoute>} />
+          <Route path="documents" element={<ProtectedRoute allowedRoles={["principal"]}><Documents /></ProtectedRoute>} />
+          <Route path="document-approvals" element={<ProtectedRoute allowedRoles={["principal"]}><PrincipalDocumentApprovals /></ProtectedRoute>} />
+          <Route path="events" element={<ProtectedRoute allowedRoles={["principal"]}><Events /></ProtectedRoute>} />
+          <Route path="announcements" element={<ProtectedRoute allowedRoles={["principal"]}><Announcements /></ProtectedRoute>} />
+          <Route path="reports" element={<ProtectedRoute allowedRoles={["principal"]}><Reports /></ProtectedRoute>} />
+          <Route path="settings" element={<ProtectedRoute allowedRoles={["principal"]}><Settings /></ProtectedRoute>} />
+          <Route path="school-settings" element={<ProtectedRoute allowedRoles={["principal"]}><SchoolSettingsPage /></ProtectedRoute>} />
+        </Route>
+        {/* Legacy redirects */}
+        <Route path="/teachers" element={<Navigate to="/staff" replace />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 }
 

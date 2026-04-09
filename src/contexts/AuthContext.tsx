@@ -91,13 +91,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Session found — verify role exists
-        const userRole = await fetchUserRole(session.user.id);
+        // Fetch role and profile in parallel for speed
+        const [userRole, profileResult] = await Promise.all([
+          fetchUserRole(session.user.id),
+          supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('user_id', session.user.id)
+            .maybeSingle(),
+        ]);
 
         if (!mounted.current) return;
 
         if (!userRole) {
-          // Session exists but no role — sign out cleanly
           await supabase.auth.signOut();
           if (mounted.current && !initDone.current) {
             initDone.current = true;
@@ -109,14 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Valid session and role — set authenticated state
-        // Fetch profile
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('full_name, email')
-          .eq('user_id', session.user.id)
-          .maybeSingle();
-
+        const profileData = profileResult.data;
         if (mounted.current && !initDone.current) {
           initDone.current = true;
           setUser(session.user);
