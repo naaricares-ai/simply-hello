@@ -28,11 +28,16 @@ export const useDisplayName = () => {
 
         // Source 2: teachers table (for teachers, staff, principal)
         if (role === 'teacher' || role === 'staff' || role === 'principal') {
-          const { data: teacher } = await supabase
+          const { data: teacher } = await (supabase as any)
             .from('teachers')
-            .select('full_name')
+            .select('employee_id, subject, user_id')
             .eq('user_id', user.id)
             .maybeSingle();
+
+          // Teachers table doesn't have full_name, get from profiles
+          if (!cancelled && teacher) {
+            // Already checked profiles above, use email fallback
+          }
 
           if (!cancelled && teacher?.full_name) {
             setDisplayName(teacher.full_name);

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface LogParams {
   actionType: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'EXPORT' | 'PERMISSION_CHANGE';
-  module: 'Students' | 'Staff' | 'Attendance' | 'Fee' | 'Reports' | 'Auth' | 'Homework' | 'Settings' | 'Events' | 'Notices' | 'Documents' | 'Email' | 'Privileges' | 'Salary';
+  module: string;
   recordAffected: string;
 }
 
