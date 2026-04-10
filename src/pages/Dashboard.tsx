@@ -47,7 +47,7 @@ export default function Dashboard() {
         const { count, error } = await (supabase as any)
           .from('document_requests')
           .select('*', { count: 'exact', head: true })
-          .eq('current_stage', 'principal_review');
+          .eq('status', 'submitted');
         
         if (cancelled) return;
         if (error) throw error;
