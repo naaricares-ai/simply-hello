@@ -275,6 +275,12 @@ serve(async (req) => {
     const userId = userData.user.id;
     console.log(`Auth user created with ID: ${userId}`);
 
+    // Insert role immediately (trigger no longer does this)
+    const { error: initialRoleError } = await supabaseAdmin
+      .from('user_roles')
+      .upsert({ user_id: userId, role: resolvedRole }, { onConflict: 'user_id,role' });
+    if (initialRoleError) console.error('Initial role insert error:', initialRoleError);
+
     // Small delay to let the trigger complete
     await new Promise(resolve => setTimeout(resolve, 500));
 
