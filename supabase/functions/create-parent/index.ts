@@ -158,6 +158,12 @@ serve(async (req) => {
       .update({ phone: parentPhone || null, force_password_change: true })
       .eq('user_id', userId);
 
+    // Insert role (trigger no longer does this)
+    const { error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .upsert({ user_id: userId, role: 'parent' }, { onConflict: 'user_id,role' });
+    if (roleError) console.error('Role insert error:', roleError);
+
     // Create parent record
     const { data: parentRecord, error: parentError } = await supabaseAdmin
       .from('parents')

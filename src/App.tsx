@@ -67,6 +67,7 @@ const handleGlobalError = (error: any) => {
     error?.message?.toLowerCase().includes('unauthorized');
 
   if (isAuthError) {
+    // Dispatch event that AuthContext listens to — triggers actual logout
     window.dispatchEvent(new CustomEvent('auth:logout'));
   }
 };
