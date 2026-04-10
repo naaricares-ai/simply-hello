@@ -18,21 +18,40 @@ export interface Announcement {
     is_read?: boolean;
 }
 
+// Helper: safely query the announcements table (may not exist yet)
+async function safeAnnouncementsQuery(queryBuilder: () => Promise<any>) {
+    try {
+        const result = await queryBuilder();
+        if (result.error) {
+            // 404 = table doesn't exist, 42P01 = undefined table
+            if (result.error.code === '42P01' || result.error.message?.includes('does not exist') || result.status === 404) {
+                return { data: [], error: null };
+            }
+            throw result.error;
+        }
+        return result;
+    } catch (e: any) {
+        if (e?.code === '42P01' || e?.message?.includes('does not exist')) {
+            return { data: [], error: null };
+        }
+        throw e;
+    }
+}
+
 export function useAnnouncements() {
     const queryClient = useQueryClient();
-    const { user, role } = useAuth();
+    const { user } = useAuth();
     const { logAction } = useAdminActionLogger();
 
     const { data, isLoading, error } = useQuery({
         queryKey: ['announcements'],
         queryFn: async () => {
-            const { data, error } = await (supabase as any)
-                .from('announcements')
-                .select('*')
-                .order('created_at', { ascending: false });
-            if (error) throw error;
-            return data as Announcement[];
+            const { data } = await safeAnnouncementsQuery(() =>
+                (supabase as any).from('announcements').select('*').order('created_at', { ascending: false })
+            );
+            return (data || []) as Announcement[];
         },
+        retry: false,
     });
 
     const createAnnouncement = useMutation({
@@ -131,16 +150,20 @@ export function useActiveAnnouncements() {
         queryKey: ['active-announcements', role],
         queryFn: async () => {
             const now = new Date().toISOString();
-            const { data: announcements, error } = await (supabase as any)
-                .from('announcements')
-                .select('*')
-                .eq('is_active', true)
-                .or(`expires_at.is.null,expires_at.gt.${now}`)
-                .order('created_at', { ascending: false })
-                .limit(5);
-            if (error) throw error;
+            const { data: announcements } = await safeAnnouncementsQuery(() =>
+                (supabase as any)
+                    .from('announcements')
+                    .select('*')
+                    .eq('is_active', true)
+                    .or(`expires_at.is.null,expires_at.gt.${now}`)
+                    .order('created_at', { ascending: false })
+                    .limit(5)
+            );
 
-            // Filter by target_audience matching current role
+            if (!announcements || announcements.length === 0) {
+                return [];
+            }
+
             const roleMap: Record<string, string> = {
                 principal: 'Admin',
                 teacher: 'Teachers',
@@ -151,17 +174,18 @@ export function useActiveAnnouncements() {
             const userAudience = roleMap[role || ''] || '';
 
             const filtered = (announcements as Announcement[]).filter(a =>
-                a.target_audience.includes('All') || a.target_audience.includes(userAudience)
+                a.target_audience?.includes('All') || a.target_audience?.includes(userAudience)
             );
 
-            // Check read status
             if (user?.id && filtered.length > 0) {
                 const ids = filtered.map(a => a.id);
-                const { data: reads } = await (supabase as any)
-                    .from('announcement_reads')
-                    .select('announcement_id')
-                    .eq('user_id', user.id)
-                    .in('announcement_id', ids);
+                const { data: reads } = await safeAnnouncementsQuery(() =>
+                    (supabase as any)
+                        .from('announcement_reads')
+                        .select('announcement_id')
+                        .eq('user_id', user.id)
+                        .in('announcement_id', ids)
+                );
 
                 const readIds = new Set((reads || []).map((r: any) => r.announcement_id));
                 return filtered.map(a => ({ ...a, is_read: readIds.has(a.id) }));
@@ -170,6 +194,7 @@ export function useActiveAnnouncements() {
             return filtered.map(a => ({ ...a, is_read: false }));
         },
         staleTime: 30000,
+        retry: false,
     });
 
     const markAsRead = useMutation({
@@ -182,9 +207,6 @@ export function useActiveAnnouncements() {
                     { onConflict: 'announcement_id,user_id' }
                 );
             if (error) throw error;
-        },
-        onSuccess: () => {
-            // Silently update cache
         },
     });
 

@@ -34,7 +34,7 @@ export function useDashboardStats(filters?: DashboardFilters) {
       let studentsQuery = supabase.from('students').select('id', { count: 'exact', head: true }).eq('is_active', true);
       if (classId) studentsQuery = studentsQuery.eq('class_id', classId);
 
-      let teachersQuery = (supabase as any).from('employees').select('id', { count: 'exact', head: true }).eq('employee_type', 'Teaching').eq('status', 'Active');
+      const teachersQuery = supabase.from('teachers').select('id', { count: 'exact', head: true }).eq('is_active', true);
 
       const classesQuery = supabase.from('classes').select('id', { count: 'exact', head: true });
 
