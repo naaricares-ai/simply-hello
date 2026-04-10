@@ -38,7 +38,6 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 // Fetch role from user_roles table
-// Always use maybeSingle — never throws on 0 rows
 const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
   try {
     const { data, error } = await supabase
@@ -54,6 +53,20 @@ const fetchUserRole = async (userId: string): Promise<UserRole | null> => {
   }
 };
 
+const fetchProfile = async (userId: string): Promise<UserProfile | null> => {
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (!data) return null;
+    return { fullName: data.full_name, full_name: data.full_name, email: data.email };
+  } catch {
+    return null;
+  }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<UserRole | null>(null);
@@ -62,15 +75,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authInitialized, setAuthInitialized] = useState(false);
 
   const mounted = useRef(true);
-  const initDone = useRef(false);
+
+  const clearAuth = useCallback(() => {
+    setUser(null);
+    setRole(null);
+    setProfile(null);
+    setIsAuthenticated(false);
+  }, []);
+
+  const forceLogout = useCallback(async () => {
+    clearAuth();
+    try { await supabase.auth.signOut(); } catch {}
+    try { sessionStorage.removeItem('sms-auth'); } catch {}
+    window.location.href = '/login';
+  }, [clearAuth]);
+
+  // Listen for global auth:logout events from React Query error handler
+  useEffect(() => {
+    const handler = () => { forceLogout(); };
+    window.addEventListener('auth:logout', handler);
+    return () => window.removeEventListener('auth:logout', handler);
+  }, [forceLogout]);
 
   useEffect(() => {
     mounted.current = true;
-    initDone.current = false;
 
     const init = async () => {
       try {
-        // getSession reads from sessionStorage via our custom adapter
         const {
           data: { session },
           error,
@@ -79,98 +110,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!mounted.current) return;
 
         if (error || !session?.user) {
-          // No session in sessionStorage — user is logged out
-          // This is normal behavior for tab-close logout
-          if (mounted.current && !initDone.current) {
-            initDone.current = true;
-            setUser(null);
-            setRole(null);
-            setIsAuthenticated(false);
-            setAuthInitialized(true);
-          }
+          clearAuth();
+          setAuthInitialized(true);
           return;
         }
 
-        // Fetch role and profile in parallel for speed
-        const [userRole, profileResult] = await Promise.all([
+        const [userRole, userProfile] = await Promise.all([
           fetchUserRole(session.user.id),
-          supabase
-            .from('profiles')
-            .select('full_name, email')
-            .eq('user_id', session.user.id)
-            .maybeSingle(),
+          fetchProfile(session.user.id),
         ]);
 
         if (!mounted.current) return;
 
         if (!userRole) {
           await supabase.auth.signOut();
-          if (mounted.current && !initDone.current) {
-            initDone.current = true;
-            setUser(null);
-            setRole(null);
-            setIsAuthenticated(false);
-            setAuthInitialized(true);
-          }
+          clearAuth();
+          setAuthInitialized(true);
           return;
         }
 
-        const profileData = profileResult.data;
-        if (mounted.current && !initDone.current) {
-          initDone.current = true;
-          setUser(session.user);
-          setRole(userRole);
-          setProfile(profileData ? { fullName: profileData.full_name, full_name: profileData.full_name, email: profileData.email } : null);
-          setIsAuthenticated(true);
-          setAuthInitialized(true);
-        }
+        setUser(session.user);
+        setRole(userRole);
+        setProfile(userProfile);
+        setIsAuthenticated(true);
+        setAuthInitialized(true);
       } catch (err) {
         console.error('[AUTH] Init error:', err);
-        if (mounted.current && !initDone.current) {
-          initDone.current = true;
-          setUser(null);
-          setRole(null);
-          setIsAuthenticated(false);
-          setAuthInitialized(true);
-        }
+        clearAuth();
+        setAuthInitialized(true);
       }
     };
 
     init();
 
-    // Listen ONLY for explicit sign in / sign out
-    // Ignore INITIAL_SESSION, TOKEN_REFRESHED, USER_UPDATED completely
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // These events must be completely ignored
-      // They fire automatically and cause loops
-      if (
-        event === 'INITIAL_SESSION' ||
-        event === 'TOKEN_REFRESHED' ||
-        event === 'USER_UPDATED'
-      ) {
+      if (!mounted.current) return;
+
+      if (event === 'INITIAL_SESSION') return;
+
+      if (event === 'SIGNED_OUT') {
+        clearAuth();
         return;
       }
 
-      if (!mounted.current) return;
-
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setRole(null);
-        setProfile(null);
-        setIsAuthenticated(false);
+      if (event === 'TOKEN_REFRESHED') {
+        if (!session?.user) {
+          // Token refresh failed — session is dead
+          console.warn('[AUTH] Token refresh failed, forcing logout');
+          forceLogout();
+          return;
+        }
+        // Token refreshed successfully — update the user object with fresh data
+        setUser(session.user);
         return;
       }
 
       if (event === 'SIGNED_IN' && session?.user) {
-        // Prevent redundant updates if already authenticated as the same user
-        if (user?.id === session.user.id) return;
-
         const userRole = await fetchUserRole(session.user.id);
         if (mounted.current && userRole) {
+          const userProfile = await fetchProfile(session.user.id);
           setUser(session.user);
           setRole(userRole);
+          setProfile(userProfile);
           setIsAuthenticated(true);
         }
       }
@@ -180,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       mounted.current = false;
       subscription.unsubscribe();
     };
-  }, []); // runs exactly once
+  }, [clearAuth, forceLogout]);
 
   const login = useCallback(async (email: string, password: string) => {
     try {
@@ -192,7 +195,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) return { error: error.message, role: null };
       if (!data.user) return { error: 'Login failed', role: null };
 
-      const userRole = await fetchUserRole(data.user.id);
+      const [userRole, userProfile] = await Promise.all([
+        fetchUserRole(data.user.id),
+        fetchProfile(data.user.id),
+      ]);
+
       if (!userRole) {
         await supabase.auth.signOut();
         return {
@@ -201,16 +208,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
       }
 
-      // Fetch profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('full_name, email')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
-
       setUser(data.user);
       setRole(userRole);
-      setProfile(profileData ? { fullName: profileData.full_name, full_name: profileData.full_name, email: profileData.email } : null);
+      setProfile(userProfile);
       setIsAuthenticated(true);
 
       return { error: null, role: userRole };
@@ -220,24 +220,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    // Clear state immediately
-    setUser(null);
-    setRole(null);
-    setProfile(null);
-    setIsAuthenticated(false);
-
-    try {
-      await supabase.auth.signOut();
-    } catch {}
-
-    // Clear sessionStorage auth token
-    try {
-      sessionStorage.removeItem('sms-auth');
-    } catch {}
-
-    // Hard redirect — clears all React in-memory state
+    clearAuth();
+    try { await supabase.auth.signOut(); } catch {}
+    try { sessionStorage.removeItem('sms-auth'); } catch {}
     window.location.href = '/login';
-  }, []);
+  }, [clearAuth]);
 
   return (
     <AuthContext.Provider
