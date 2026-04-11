@@ -38,7 +38,6 @@ interface DocRequest {
   purpose: string;
   other_description: string | null;
   status: string;
-  status: string;
   requested_at: string;
   clerk_note: string | null;
   students?: { full_name: string; admission_number: string; class_id: string | null; classes?: { name: string; section?: string | null } | null } | null;
@@ -416,7 +415,7 @@ export function ClerkDocumentRequests() {
 }
 
 function RequestCard({ req, onForward, compact }: { req: DocRequest; onForward?: () => void; compact?: boolean }) {
-  const stage = STAGE_LABELS[req.current_stage] || STAGE_LABELS.submitted;
+  const stage = STAGE_LABELS[req.status] || STAGE_LABELS.submitted;
   const student = (req as any).students;
   const parent = (req as any).parents;
 
