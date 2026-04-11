@@ -184,8 +184,8 @@ export default function PrincipalDocumentApprovals() {
       const { error } = await (supabase as any)
         .from('document_requests')
         .update({
-          status: 'clerk_review',
-          clerk_note: `Returned by Principal: ${returnReason}`,
+          status: 'submitted',
+          admin_note: `Returned by Principal: ${returnReason}`,
         })
         .eq('id', returnDialog.id);
 
