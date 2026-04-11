@@ -69,7 +69,7 @@ export function AnnouncementBanner() {
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>{expanded?.created_at ? formatDistanceFromNow(expanded.created_at) : ''}</span>
                             <span>•</span>
-                            <span>For: {expanded?.target_audience?.join(', ')}</span>
+                            <span>For: {expanded?.target_audience || 'All'}</span>
                         </div>
                     </div>
                 </DialogContent>

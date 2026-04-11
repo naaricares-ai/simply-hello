@@ -71,7 +71,8 @@ export default function Announcements() {
         const payload = {
             title: formData.title,
             content: formData.content,
-            target_audience: formData.target_audience,
+            target_audience: formData.target_audience.join(', '),
+            notice_type: 'announcement',
             expires_at: formData.expires_at || undefined,
         };
 
@@ -141,16 +142,12 @@ export default function Announcements() {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex flex-wrap gap-1">
-                                                {item.target_audience?.map((a: string) => (
-                                                    <Badge key={a} variant="outline" className="text-xs">{a}</Badge>
-                                                ))}
-                                            </div>
+                                            <Badge variant="outline" className="text-xs">{item.target_audience || 'All'}</Badge>
                                         </TableCell>
                                         <TableCell>
                                             {isExpired(item) ? (
                                                 <span className="badge-destructive">Expired</span>
-                                            ) : item.is_active ? (
+                                            ) : item.is_approved ? (
                                                 <span className="badge-success">Active</span>
                                             ) : (
                                                 <span className="badge-warning">Inactive</span>
@@ -160,7 +157,7 @@ export default function Announcements() {
                                         <TableCell className="text-sm text-muted-foreground">{item.expires_at ? formatDateIndian(item.expires_at) : '—'}</TableCell>
                                         <TableCell>
                                             <Switch
-                                                checked={item.is_active}
+                                                checked={!!item.is_approved}
                                                 onCheckedChange={v => toggleActive.mutate({ id: item.id, is_active: v })}
                                             />
                                         </TableCell>
