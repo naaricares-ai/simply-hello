@@ -139,13 +139,8 @@ export default function PrincipalDocumentApprovals() {
       const { error } = await (supabase as any)
         .from('document_requests')
         .update({
-          status: 'clerk_issuing',
-          status: 'pending', // internal status backward compatibility
-          principal_signed_at: new Date().toISOString(),
-          principal_id: employeeDetails?.id || null,
-          principal_note: principalNote.trim() || null,
-          principal_signature_data: signatureData,
-          returned_to_clerk_at: new Date().toISOString(),
+          status: 'pending',
+          admin_note: principalNote.trim() || null,
         })
         .eq('id', signDialog.id);
 

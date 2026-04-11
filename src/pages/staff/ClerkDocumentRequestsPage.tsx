@@ -410,10 +410,7 @@ export default function ClerkDocumentRequestsPage() {
         .from('document_requests')
         .update({
           status: 'ready',
-          status: 'ready', // maintain backward compatibility if status col exists
           document_url: documentUrl,
-          issued_by_clerk_id: employeeDetails.id,
-          issued_at: new Date().toISOString(),
           ready_at: new Date().toISOString(),
         })
         .eq('id', issueDialog.id);
