@@ -92,12 +92,10 @@ export default function StudyMaterials() {
     },
   });
 
-  const assignedClassIds: string[] = teacherRecord?.classes_assigned || [];
-  const classes = allClasses.filter((c: any) =>
-    assignedClassIds.length === 0 ? true : assignedClassIds.includes(c.id)
-  );
+  const assignedClassIds: string[] = [];
+  const classes = allClasses;
 
-  const subjects: string[] = teacherRecord?.subjects_assigned || [];
+  const subjects: string[] = teacherRecord?.subject ? [teacherRecord.subject] : [];
 
   // Apply filters
   const filtered = materials.filter(m => {
