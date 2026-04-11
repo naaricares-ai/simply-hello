@@ -121,10 +121,8 @@ export function ClerkDocumentRequests() {
       const { error } = await supabase
         .from('document_requests' as any)
         .update({
-          status: 'principal_review',
-          forwarded_to_principal_at: new Date().toISOString(),
-          forwarded_by_clerk_id: currentEmployee.id,
-          clerk_note: clerkNote.trim() || null,
+          status: 'submitted',
+          admin_note: clerkNote.trim() || null,
         })
         .eq('id', req.id);
       if (error) throw error;
@@ -176,10 +174,8 @@ export function ClerkDocumentRequests() {
         .from('document_requests' as any)
         .update({
           status: 'ready',
-          status: 'ready',
           document_url: documentUrl.trim(),
-          issued_by_clerk_id: currentEmployee.id,
-          issued_at: new Date().toISOString(),
+          ready_at: new Date().toISOString(),
         })
         .eq('id', req.id);
       if (error) throw error;
