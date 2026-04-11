@@ -94,10 +94,9 @@ export function useSalary(month?: number, year?: number) {
   const processAllSalaries = useMutation({
     mutationFn: async ({ month, year }: { month: number; year: number }) => {
       // Get all teachers
-      const { data: teachers, error: teachersError } = await (supabase as any)
-        .from('employees')
+      const { data: teachers, error: teachersError } = await supabase
+        .from('teachers')
         .select('*')
-        .eq('employee_type', 'Teaching')
         .eq('status', 'Active');
 
       if (teachersError) throw teachersError;
