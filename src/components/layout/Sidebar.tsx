@@ -94,7 +94,7 @@ export function Sidebar() {
         const { count } = await (supabase as any)
           .from('document_requests')
           .select('*', { count: 'exact', head: true })
-          .eq('current_stage', 'principal_review');
+          .eq('status', 'submitted');
         if (count !== null) setPendingDocCount(count);
       };
       fetchDocs();

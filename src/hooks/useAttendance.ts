@@ -154,7 +154,7 @@ export function useTeacherAttendance(date: string) {
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from('teacher_attendance')
-        .select('*, employees(*)')
+        .select('*, teachers(*)')
         .eq('date', date);
       if (error) throw error;
       return data as TeacherAttendance[];
