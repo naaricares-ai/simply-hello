@@ -42,9 +42,9 @@ export default function PrincipalDocumentApprovals() {
     const fetchEmployeeAndRequests = async () => {
       if (!user?.id) return;
       try {
-        const { data: emp } = await (supabase as any)
-          .from('employees')
-          .select('id, full_name, designation, department')
+        const { data: emp } = await supabase
+          .from('teachers')
+          .select('id, designation, department')
           .eq('user_id', user.id)
           .maybeSingle();
           

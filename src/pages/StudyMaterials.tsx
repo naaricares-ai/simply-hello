@@ -68,14 +68,14 @@ export default function StudyMaterials() {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Fetch teacher's assigned subjects/classes from employees table (not teachers table)
+  // Fetch teacher's record from teachers table
   const { data: teacherRecord } = useQuery({
     queryKey: ['teacher-employee', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await (supabase as any)
-        .from('employees')
-        .select('id, subjects_assigned, classes_assigned')
+      const { data } = await supabase
+        .from('teachers')
+        .select('id, subject')
         .eq('user_id', user.id)
         .maybeSingle();
       return data;

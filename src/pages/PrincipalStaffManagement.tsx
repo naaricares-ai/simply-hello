@@ -726,18 +726,8 @@ export default function PrincipalStaffManagement() {
         }
       }
 
-      // Step 4: Delete from employees table
-      const { error: empErr } = await (supabase as any)
-        .from('employees')
-        .delete()
-        .eq('id', employeeId);
-
-      if (empErr) {
-        if (empErr.code === '23503') {
-          throw new Error('Cannot delete: Employee has linked records (attendance/leaves). Please deactivate instead.');
-        }
-        throw new Error(empErr.message || 'Failed to delete employee record');
-      }
+      // Step 4: already deleted from teachers above, skip employees
+      // (employees table doesn't exist; all staff are in teachers table)
 
       // Step 5: Delete from user_roles
       if (userId) {

@@ -37,8 +37,8 @@ export function StaffSidebar() {
     const fetchEmployee = async () => {
       if (!user?.id) return;
       try {
-        const { data } = await (supabase as any)
-          .from('employees')
+        const { data } = await supabase
+          .from('teachers')
           .select('id, department, designation, employee_type')
           .eq('user_id', user.id)
           .single();
