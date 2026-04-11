@@ -37,7 +37,7 @@ interface DocRequest {
   document_type: string;
   purpose: string;
   other_description: string | null;
-  current_stage: string;
+  status: string;
   status: string;
   requested_at: string;
   clerk_note: string | null;
@@ -67,8 +67,7 @@ export function ClerkDocumentRequests() {
       const { data, error } = await supabase
         .from('document_requests' as any)
         .select(selectQuery)
-        .eq('assigned_clerk_id', currentEmployee.id)
-        .eq('current_stage', 'clerk_review')
+        .eq('status', 'submitted')
         .order('requested_at', { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as DocRequest[];
@@ -84,8 +83,7 @@ export function ClerkDocumentRequests() {
       const { data, error } = await supabase
         .from('document_requests' as any)
         .select(selectQuery)
-        .eq('assigned_clerk_id', currentEmployee.id)
-        .eq('current_stage', 'clerk_issuing')
+        .eq('status', 'pending')
         .order('requested_at', { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as DocRequest[];
@@ -101,9 +99,8 @@ export function ClerkDocumentRequests() {
       let q = supabase
         .from('document_requests' as any)
         .select(selectQuery)
-        .eq('assigned_clerk_id', currentEmployee.id)
         .order('requested_at', { ascending: false });
-      if (stageFilter !== 'all') q = q.eq('current_stage', stageFilter);
+      if (stageFilter !== 'all') q = q.eq('status', stageFilter);
       const { data, error } = await q;
       if (error) throw error;
       return (data || []) as unknown as DocRequest[];
