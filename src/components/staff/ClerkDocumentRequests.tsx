@@ -121,7 +121,7 @@ export function ClerkDocumentRequests() {
       const { error } = await supabase
         .from('document_requests' as any)
         .update({
-          current_stage: 'principal_review',
+          status: 'principal_review',
           forwarded_to_principal_at: new Date().toISOString(),
           forwarded_by_clerk_id: currentEmployee.id,
           clerk_note: clerkNote.trim() || null,
@@ -175,7 +175,7 @@ export function ClerkDocumentRequests() {
       const { error } = await supabase
         .from('document_requests' as any)
         .update({
-          current_stage: 'ready',
+          status: 'ready',
           status: 'ready',
           document_url: documentUrl.trim(),
           issued_by_clerk_id: currentEmployee.id,

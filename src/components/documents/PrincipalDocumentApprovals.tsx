@@ -28,7 +28,7 @@ interface DocRequest {
   document_type: string;
   purpose: string;
   other_description: string | null;
-  current_stage: string;
+  status: string;
   clerk_note: string | null;
   principal_note: string | null;
   requested_at: string;
@@ -70,7 +70,7 @@ export function PrincipalDocumentApprovals() {
       const { data, error } = await supabase
         .from('document_requests' as any)
         .select('*, students:student_id (full_name, admission_number, classes:class_id (name, section))')
-        .eq('current_stage', 'principal_review')
+        .eq('status', 'principal_review')
         .order('forwarded_to_principal_at', { ascending: true });
       if (error) throw error;
       return (data || []) as unknown as DocRequest[];
@@ -176,7 +176,7 @@ export function PrincipalDocumentApprovals() {
       const { error } = await supabase
         .from('document_requests' as any)
         .update({
-          current_stage: 'clerk_issuing',
+          status: 'clerk_issuing',
           principal_signed_at: new Date().toISOString(),
           principal_reviewed_at: new Date().toISOString(),
           principal_employee_id: principalEmployee?.id || null,
@@ -236,7 +236,7 @@ export function PrincipalDocumentApprovals() {
       const { error } = await supabase
         .from('document_requests' as any)
         .update({
-          current_stage: 'clerk_review',
+          status: 'clerk_review',
           clerk_note: `Returned by Principal: ${returnReason.trim()}`,
         })
         .eq('id', req.id);

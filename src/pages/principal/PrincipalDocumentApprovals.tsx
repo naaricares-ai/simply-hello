@@ -139,7 +139,7 @@ export default function PrincipalDocumentApprovals() {
       const { error } = await (supabase as any)
         .from('document_requests')
         .update({
-          current_stage: 'clerk_issuing',
+          status: 'clerk_issuing',
           status: 'pending', // internal status backward compatibility
           principal_signed_at: new Date().toISOString(),
           principal_id: employeeDetails?.id || null,
@@ -189,7 +189,7 @@ export default function PrincipalDocumentApprovals() {
       const { error } = await (supabase as any)
         .from('document_requests')
         .update({
-          current_stage: 'clerk_review',
+          status: 'clerk_review',
           clerk_note: `Returned by Principal: ${returnReason}`,
         })
         .eq('id', returnDialog.id);
@@ -250,8 +250,8 @@ export default function PrincipalDocumentApprovals() {
     );
   }
 
-  const pendingSignature = requests.filter(r => r.current_stage === 'principal_review');
-  const previouslySigned = requests.filter(r => r.principal_signed_at != null && r.current_stage !== 'principal_review');
+  const pendingSignature = requests.filter(r => r.status === 'principal_review');
+  const previouslySigned = requests.filter(r => r.principal_signed_at != null && r.status !== 'principal_review');
 
   return (
     <div className="space-y-6 animate-fade-up max-w-[1200px] mx-auto py-6">
@@ -329,7 +329,7 @@ export default function PrincipalDocumentApprovals() {
                       <h3 className="font-semibold text-sm">{request.students?.full_name}</h3>
                       <p className="text-xs text-muted-foreground">{request.document_type} • Signed: {new Date(request.principal_signed_at).toLocaleDateString()}</p>
                       <div className="mt-1">
-                        <Badge variant="outline" className="text-[10px]">{request.current_stage.replace('_', ' ').toUpperCase()}</Badge>
+                        <Badge variant="outline" className="text-[10px]">{request.status.replace('_', ' ').toUpperCase()}</Badge>
                       </div>
                     </div>
                   </CardContent>
