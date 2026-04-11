@@ -385,9 +385,9 @@ async function handleSchoolAttendanceOverview(input: any) {
 async function handlePendingDocApprovals() {
   const { data } = await (supabase as any)
     .from('document_requests')
-    .select('id, document_type, purpose, forwarded_to_principal_at, students (full_name, admission_number)')
-    .eq('current_stage', 'principal_review')
-    .order('forwarded_to_principal_at', { ascending: true });
+    .select('id, document_type, purpose, requested_at, students (full_name, admission_number)')
+    .eq('status', 'submitted')
+    .order('requested_at', { ascending: true });
 
   return {
     pending_count: data?.length || 0,
@@ -421,8 +421,7 @@ async function handleFeeCollectionSummary() {
 }
 
 async function handleStaffOverview() {
-  const { data: teachers } = await supabase.from('teachers').select('id, status');
-  const { data: employees } = await (supabase as any).from('employees').select('id, status, employee_type');
+  const { data: teachers } = await supabase.from('teachers').select('id, status, employee_type');
   const today = new Date().toISOString().split('T')[0];
   const { data: leaves } = await supabase
     .from('teacher_leaves')
@@ -431,13 +430,12 @@ async function handleStaffOverview() {
     .lte('start_date', today)
     .gte('end_date', today);
 
+  const allStaff = teachers || [];
   return {
-    total_teaching: teachers?.length || 0,
-    total_non_teaching: employees?.filter((e: any) => e.employee_type !== 'Teaching').length || 0,
+    total_teaching: allStaff.filter((t: any) => t.employee_type === 'Teaching').length,
+    total_non_teaching: allStaff.filter((t: any) => t.employee_type !== 'Teaching').length,
     on_leave_today: leaves?.length || 0,
-    active_staff:
-      (teachers?.filter((t: any) => t.status === 'Active').length || 0) +
-      (employees?.filter((e: any) => e.status === 'Active').length || 0),
+    active_staff: allStaff.filter((t: any) => t.status === 'Active').length,
   };
 }
 
@@ -609,24 +607,28 @@ export default function SarthiChatbot({ variant }: { variant: SarthiRole }) {
     if (variant !== 'teacher' || !user?.id) return;
 
     const fetchTeacherContext = async () => {
-      // Check employees table
-      const { data: emp } = await (supabase as any)
-        .from('employees')
-        .select('id, is_class_teacher, assigned_class_id')
+      const { data: teacher } = await supabase
+        .from('teachers')
+        .select('id, assigned_class_id')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      // Also check teachers table
-      const { data: teacher } = await (supabase as any)
-        .from('teachers')
-        .select('id, assigned_class_id, is_class_teacher')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Check if class teacher via assignments
+      let isClassTeacher = false;
+      if (teacher?.id) {
+        const { data: assignment } = await supabase
+          .from('teacher_class_assignments')
+          .select('is_class_teacher')
+          .eq('teacher_id', teacher.id)
+          .eq('is_class_teacher', true)
+          .maybeSingle();
+        isClassTeacher = !!assignment;
+      }
 
       setTeacherCtx({
-        teacherId: (emp?.id || teacher?.id) as string,
-        classId: (emp?.assigned_class_id || teacher?.assigned_class_id) as string | null,
-        isClassTeacher: (emp?.is_class_teacher || teacher?.is_class_teacher) || false,
+        teacherId: teacher?.id as string,
+        classId: teacher?.assigned_class_id as string | null,
+        isClassTeacher,
       });
       setCtxReady(true);
     };
