@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 
 export type Teacher = any;
 
@@ -11,10 +10,9 @@ export function useTeachers() {
   const { data: teachers, isLoading, error, refetch } = useQuery({
     queryKey: ['teachers'],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('employees')
+      const { data, error } = await supabase
+        .from('teachers')
         .select('*')
-        .eq('employee_type', 'Teaching')
         .order('created_at');
       if (error) throw error;
       return data;
@@ -23,9 +21,9 @@ export function useTeachers() {
 
   const createTeacher = useMutation({
     mutationFn: async (teacher: any) => {
-      const { data, error } = await (supabase as any)
-        .from('employees')
-        .insert({ ...teacher, employee_type: 'Teaching' })
+      const { data, error } = await supabase
+        .from('teachers')
+        .insert(teacher)
         .select()
         .single();
       if (error) throw error;
@@ -42,8 +40,8 @@ export function useTeachers() {
 
   const updateTeacher = useMutation({
     mutationFn: async ({ id, ...updates }: any) => {
-      const { data, error } = await (supabase as any)
-        .from('employees')
+      const { data, error } = await supabase
+        .from('teachers')
         .update(updates)
         .eq('id', id)
         .select()
@@ -62,8 +60,8 @@ export function useTeachers() {
 
   const deleteTeacher = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
-        .from('employees')
+      const { error } = await supabase
+        .from('teachers')
         .update({ status: 'Inactive' })
         .eq('id', id);
       if (error) throw error;
@@ -92,7 +90,7 @@ export function useTeacherProfiles() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['teacher-profiles'],
     queryFn: async () => {
-      const { data: teachers, error: teachersError } = await (supabase as any)
+      const { data: teachers, error: teachersError } = await supabase
         .from('teachers')
         .select('*')
         .eq('status', 'Active');
