@@ -8,34 +8,14 @@ export interface Announcement {
     id: string;
     title: string;
     content: string;
-    target_audience: string[];
-    target_class_ids: string[] | null;
-    posted_by_user_id: string | null;
-    is_active: boolean;
+    target_audience: string;
+    notice_type: string;
+    class_id: string | null;
+    created_by: string;
+    is_approved: boolean | null;
     expires_at: string | null;
     created_at: string;
-    profiles?: { full_name: string } | null;
     is_read?: boolean;
-}
-
-// Helper: safely query the announcements table (may not exist yet)
-async function safeAnnouncementsQuery(queryBuilder: () => Promise<any>) {
-    try {
-        const result = await queryBuilder();
-        if (result.error) {
-            // 404 = table doesn't exist, 42P01 = undefined table
-            if (result.error.code === '42P01' || result.error.message?.includes('does not exist') || result.status === 404) {
-                return { data: [], error: null };
-            }
-            throw result.error;
-        }
-        return result;
-    } catch (e: any) {
-        if (e?.code === '42P01' || e?.message?.includes('does not exist')) {
-            return { data: [], error: null };
-        }
-        throw e;
-    }
 }
 
 export function useAnnouncements() {
@@ -46,28 +26,32 @@ export function useAnnouncements() {
     const { data, isLoading, error } = useQuery({
         queryKey: ['announcements'],
         queryFn: async () => {
-            const { data } = await safeAnnouncementsQuery(() =>
-                (supabase as any).from('announcements').select('*').order('created_at', { ascending: false })
-            );
-            return (data || []) as Announcement[];
+            const { data, error } = await supabase
+                .from('notices')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (error) throw error;
+            return (data || []) as unknown as Announcement[];
         },
-        retry: false,
     });
 
     const createAnnouncement = useMutation({
         mutationFn: async (input: {
             title: string;
             content: string;
-            target_audience: string[];
-            target_class_ids?: string[];
+            target_audience?: string;
+            notice_type?: string;
             expires_at?: string;
         }) => {
-            const { data, error } = await (supabase as any)
-                .from('announcements')
+            const { data, error } = await supabase
+                .from('notices')
                 .insert({
-                    ...input,
-                    posted_by_user_id: user?.id,
-                    target_class_ids: input.target_class_ids || null,
+                    title: input.title,
+                    content: input.content,
+                    target_audience: input.target_audience || 'all',
+                    notice_type: input.notice_type || 'announcement',
+                    created_by: user?.id || '',
+                    is_approved: true,
                     expires_at: input.expires_at || null,
                 })
                 .select()
@@ -85,9 +69,9 @@ export function useAnnouncements() {
 
     const updateAnnouncement = useMutation({
         mutationFn: async ({ id, ...updates }: Partial<Announcement> & { id: string }) => {
-            const { data, error } = await (supabase as any)
-                .from('announcements')
-                .update(updates)
+            const { data, error } = await supabase
+                .from('notices')
+                .update(updates as any)
                 .eq('id', id)
                 .select()
                 .single();
@@ -103,8 +87,8 @@ export function useAnnouncements() {
 
     const deleteAnnouncement = useMutation({
         mutationFn: async (id: string) => {
-            const { error } = await (supabase as any)
-                .from('announcements')
+            const { error } = await supabase
+                .from('notices')
                 .delete()
                 .eq('id', id);
             if (error) throw error;
@@ -118,9 +102,9 @@ export function useAnnouncements() {
 
     const toggleActive = useMutation({
         mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-            const { error } = await (supabase as any)
-                .from('announcements')
-                .update({ is_active })
+            const { error } = await supabase
+                .from('notices')
+                .update({ is_approved: is_active })
                 .eq('id', id);
             if (error) throw error;
         },
@@ -142,71 +126,34 @@ export function useAnnouncements() {
     };
 }
 
-/** Get active announcements visible to the current user's role */
+/** Get active announcements (approved notices) visible to the current user */
 export function useActiveAnnouncements() {
-    const { user, role } = useAuth();
+    const { role } = useAuth();
 
     const { data, isLoading } = useQuery({
         queryKey: ['active-announcements', role],
         queryFn: async () => {
-            const now = new Date().toISOString();
-            const { data: announcements } = await safeAnnouncementsQuery(() =>
-                (supabase as any)
-                    .from('announcements')
-                    .select('*')
-                    .eq('is_active', true)
-                    .or(`expires_at.is.null,expires_at.gt.${now}`)
-                    .order('created_at', { ascending: false })
-                    .limit(5)
-            );
+            const now = new Date().toISOString().split('T')[0];
+            const { data, error } = await supabase
+                .from('notices')
+                .select('*')
+                .eq('is_approved', true)
+                .or(`expires_at.is.null,expires_at.gt.${now}`)
+                .order('created_at', { ascending: false })
+                .limit(5);
 
-            if (!announcements || announcements.length === 0) {
-                return [];
-            }
-
-            const roleMap: Record<string, string> = {
-                principal: 'Admin',
-                teacher: 'Teachers',
-                parent: 'Parents',
-                staff: 'Non-Teaching Staff',
-                super_admin: 'Admin',
-            };
-            const userAudience = roleMap[role || ''] || '';
-
-            const filtered = (announcements as Announcement[]).filter(a =>
-                a.target_audience?.includes('All') || a.target_audience?.includes(userAudience)
-            );
-
-            if (user?.id && filtered.length > 0) {
-                const ids = filtered.map(a => a.id);
-                const { data: reads } = await safeAnnouncementsQuery(() =>
-                    (supabase as any)
-                        .from('announcement_reads')
-                        .select('announcement_id')
-                        .eq('user_id', user.id)
-                        .in('announcement_id', ids)
-                );
-
-                const readIds = new Set((reads || []).map((r: any) => r.announcement_id));
-                return filtered.map(a => ({ ...a, is_read: readIds.has(a.id) }));
-            }
-
-            return filtered.map(a => ({ ...a, is_read: false }));
+            if (error) throw error;
+            return (data || []).map(n => ({
+                ...n,
+                is_read: false,
+            })) as unknown as Announcement[];
         },
         staleTime: 30000,
-        retry: false,
     });
 
     const markAsRead = useMutation({
-        mutationFn: async (announcementId: string) => {
-            if (!user?.id) return;
-            const { error } = await (supabase as any)
-                .from('announcement_reads')
-                .upsert(
-                    { announcement_id: announcementId, user_id: user.id },
-                    { onConflict: 'announcement_id,user_id' }
-                );
-            if (error) throw error;
+        mutationFn: async (_announcementId: string) => {
+            // No-op: notices table doesn't have read tracking
         },
     });
 
@@ -214,6 +161,6 @@ export function useActiveAnnouncements() {
         announcements: (data || []) as Announcement[],
         isLoading,
         markAsRead,
-        unreadCount: (data || []).filter((a: Announcement) => !a.is_read).length,
+        unreadCount: (data || []).length,
     };
 }
