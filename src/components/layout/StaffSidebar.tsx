@@ -61,7 +61,7 @@ export function StaffSidebar() {
           .from('document_requests')
           .select('*', { count: 'exact', head: true })
           .eq('assigned_clerk_id', employeeDetails.id)
-          .eq('current_stage', 'clerk_review');
+          .eq('status', 'submitted');
         if (count !== null) setPendingDocCount(count);
       };
       fetchDocs();

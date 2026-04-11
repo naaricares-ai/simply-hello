@@ -47,8 +47,8 @@ export default function ClerkDocumentRequestsPage() {
     const fetchEmployeeAndRequests = async () => {
       if (!user?.id) return;
       try {
-        const { data: emp } = await (supabase as any)
-          .from('employees')
+        const { data: emp } = await supabase
+          .from('teachers')
           .select('*')
           .eq('user_id', user.id)
           .single();

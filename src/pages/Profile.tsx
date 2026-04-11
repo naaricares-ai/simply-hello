@@ -82,8 +82,8 @@ export default function Profile() {
 
       // If teacher, update teacher record too
       if (currentTeacher && formData.qualification) {
-        const { error: teacherError } = await (supabase as any)
-          .from('employees')
+        const { error: teacherError } = await supabase
+          .from('teachers')
           .update({ qualification: formData.qualification })
           .eq('id', currentTeacher.id);
 
