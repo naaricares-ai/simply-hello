@@ -44,7 +44,7 @@ export default function Dashboard() {
     const fetchDocs = async () => {
       if (role !== 'principal') return;
       try {
-        const { count, error } = await (supabase as any)
+        const { count, error } = await supabase
           .from('document_requests')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'submitted');

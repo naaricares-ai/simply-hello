@@ -41,9 +41,9 @@ export default function DashboardStaff() {
     const fetchEmployee = async () => {
       if (!user?.id) return;
       try {
-        const { data, error } = await (supabase as any)
-          .from('employees')
-          .select('id, full_name, department, designation, employee_type, status')
+        const { data, error } = await supabase
+          .from('teachers')
+          .select('id, subject, department, designation, employee_type, status')
           .eq('user_id', user.id)
           .single();
         

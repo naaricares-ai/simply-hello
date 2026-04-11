@@ -40,8 +40,8 @@ export function useTeacherDocuments() {
       let teacherInfos: TeacherInfo[] = [];
 
       if (teacherIds.length > 0) {
-        const { data: teachers } = await (supabase as any)
-          .from('employees')
+        const { data: teachers } = await supabase
+          .from('teachers')
           .select('id, user_id')
           .in('id', teacherIds);
 

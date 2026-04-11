@@ -20,10 +20,10 @@ export function AdministrationDashboard({ employee }: { employee: any }) {
     
     const fetchCounts = async () => {
       try {
-        const { data } = await (supabase as any)
+        const { data } = await supabase
           .from('document_requests')
-          .select('current_stage, issued_at')
-          .eq('assigned_clerk_id', employee.id);
+          .select('status, ready_at')
+          .eq('parent_id', employee.id);
         
         if (data) {
           const now = new Date();
@@ -32,9 +32,9 @@ export function AdministrationDashboard({ employee }: { employee: any }) {
           let newReqs = 0, readyToIssue = 0, issuedThisMonth = 0;
           
           data.forEach((req: any) => {
-            if (req.current_stage === 'clerk_review') newReqs++;
-            if (req.current_stage === 'clerk_issuing') readyToIssue++;
-            if (['ready', 'downloaded'].includes(req.current_stage) && req.issued_at >= firstDayOfMonth) {
+            if (req.status === 'submitted') newReqs++;
+            if (req.status === 'pending') readyToIssue++;
+            if (['ready', 'downloaded'].includes(req.status) && req.ready_at >= firstDayOfMonth) {
               issuedThisMonth++;
             }
           });

@@ -37,7 +37,6 @@ interface DocRequest {
   document_type: string;
   purpose: string;
   other_description: string | null;
-  current_stage: string;
   status: string;
   requested_at: string;
   clerk_note: string | null;
@@ -67,8 +66,7 @@ export function ClerkDocumentRequests() {
       const { data, error } = await supabase
         .from('document_requests' as any)
         .select(selectQuery)
-        .eq('assigned_clerk_id', currentEmployee.id)
-        .eq('current_stage', 'clerk_review')
+        .eq('status', 'submitted')
         .order('requested_at', { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as DocRequest[];
@@ -84,8 +82,7 @@ export function ClerkDocumentRequests() {
       const { data, error } = await supabase
         .from('document_requests' as any)
         .select(selectQuery)
-        .eq('assigned_clerk_id', currentEmployee.id)
-        .eq('current_stage', 'clerk_issuing')
+        .eq('status', 'pending')
         .order('requested_at', { ascending: false });
       if (error) throw error;
       return (data || []) as unknown as DocRequest[];
@@ -101,9 +98,8 @@ export function ClerkDocumentRequests() {
       let q = supabase
         .from('document_requests' as any)
         .select(selectQuery)
-        .eq('assigned_clerk_id', currentEmployee.id)
         .order('requested_at', { ascending: false });
-      if (stageFilter !== 'all') q = q.eq('current_stage', stageFilter);
+      if (stageFilter !== 'all') q = q.eq('status', stageFilter);
       const { data, error } = await q;
       if (error) throw error;
       return (data || []) as unknown as DocRequest[];
@@ -125,10 +121,8 @@ export function ClerkDocumentRequests() {
       const { error } = await supabase
         .from('document_requests' as any)
         .update({
-          current_stage: 'principal_review',
-          forwarded_to_principal_at: new Date().toISOString(),
-          forwarded_by_clerk_id: currentEmployee.id,
-          clerk_note: clerkNote.trim() || null,
+          status: 'submitted',
+          admin_note: clerkNote.trim() || null,
         })
         .eq('id', req.id);
       if (error) throw error;
@@ -179,11 +173,9 @@ export function ClerkDocumentRequests() {
       const { error } = await supabase
         .from('document_requests' as any)
         .update({
-          current_stage: 'ready',
           status: 'ready',
           document_url: documentUrl.trim(),
-          issued_by_clerk_id: currentEmployee.id,
-          issued_at: new Date().toISOString(),
+          ready_at: new Date().toISOString(),
         })
         .eq('id', req.id);
       if (error) throw error;
@@ -419,7 +411,7 @@ export function ClerkDocumentRequests() {
 }
 
 function RequestCard({ req, onForward, compact }: { req: DocRequest; onForward?: () => void; compact?: boolean }) {
-  const stage = STAGE_LABELS[req.current_stage] || STAGE_LABELS.submitted;
+  const stage = STAGE_LABELS[req.status] || STAGE_LABELS.submitted;
   const student = (req as any).students;
   const parent = (req as any).parents;
 

@@ -27,7 +27,7 @@ export function useTimetable(classId?: string) {
     queryFn: async () => {
       let query = (supabase as any)
         .from('timetable')
-        .select('*, classes(*), employees(*)')
+        .select('*, classes(*), teachers(*)')
         .order('day_of_week')
         .order('start_time');
 

@@ -142,14 +142,14 @@ export function useStaffPermissions() {
     const { data: staffData = [], isLoading: staffLoading } = useQuery({
         queryKey: ['privilege-staff-list'],
         queryFn: async () => {
-            const { data: employees, error: employeesErr } = await (supabase as any).from('employees').select('*');
+            const { data: teachers, error: teachersErr } = await supabase.from('teachers').select('*');
 
-            if (employeesErr) console.error('Employees fetch error:', employeesErr);
+            if (teachersErr) console.error('Teachers fetch error:', teachersErr);
 
-            const allStaff = (employees || []).map((e: any) => ({ 
-                ...e, 
-                employee_type: e.employee_type || 'Non-Teaching', 
-                source_table: 'employees' 
+            const allStaff = (teachers || []).map((t: any) => ({ 
+                ...t, 
+                employee_type: t.employee_type || 'Teaching', 
+                source_table: 'teachers' 
             }));
 
             const userIds = allStaff.map((s: any) => s.user_id).filter(Boolean);

@@ -37,8 +37,8 @@ export function StaffSidebar() {
     const fetchEmployee = async () => {
       if (!user?.id) return;
       try {
-        const { data } = await (supabase as any)
-          .from('employees')
+        const { data } = await supabase
+          .from('teachers')
           .select('id, department, designation, employee_type')
           .eq('user_id', user.id)
           .single();
@@ -60,8 +60,7 @@ export function StaffSidebar() {
         const { count } = await (supabase as any)
           .from('document_requests')
           .select('*', { count: 'exact', head: true })
-          .eq('assigned_clerk_id', employeeDetails.id)
-          .eq('current_stage', 'clerk_review');
+          .eq('status', 'submitted');
         if (count !== null) setPendingDocCount(count);
       };
       fetchDocs();

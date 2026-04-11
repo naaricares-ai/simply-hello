@@ -47,8 +47,8 @@ export default function ClerkDocumentRequestsPage() {
     const fetchEmployeeAndRequests = async () => {
       if (!user?.id) return;
       try {
-        const { data: emp } = await (supabase as any)
-          .from('employees')
+        const { data: emp } = await supabase
+          .from('teachers')
           .select('*')
           .eq('user_id', user.id)
           .single();
@@ -109,7 +109,7 @@ export default function ClerkDocumentRequestsPage() {
       const { error } = await (supabase as any)
         .from('document_requests')
         .update({
-          current_stage: 'principal_review',
+          status: 'principal_review',
           forwarded_to_principal_at: new Date().toISOString(),
           forwarded_by_clerk_id: employeeDetails.id,
           clerk_note: clerkNote.trim() || null,
@@ -409,11 +409,8 @@ export default function ClerkDocumentRequestsPage() {
       const { error } = await (supabase as any)
         .from('document_requests')
         .update({
-          current_stage: 'ready',
-          status: 'ready', // maintain backward compatibility if status col exists
+          status: 'ready',
           document_url: documentUrl,
-          issued_by_clerk_id: employeeDetails.id,
-          issued_at: new Date().toISOString(),
           ready_at: new Date().toISOString(),
         })
         .eq('id', issueDialog.id);
@@ -448,10 +445,10 @@ export default function ClerkDocumentRequestsPage() {
     }
   };
 
-  const pendingRequests = requests.filter(r => r.current_stage === 'clerk_review');
-  const readyRequests = requests.filter(r => r.current_stage === 'clerk_issuing');
-  const withPrincipal = requests.filter(r => r.current_stage === 'principal_review');
-  const completed = requests.filter(r => ['ready', 'downloaded'].includes(r.current_stage));
+  const pendingRequests = requests.filter(r => r.status === 'clerk_review');
+  const readyRequests = requests.filter(r => r.status === 'clerk_issuing');
+  const withPrincipal = requests.filter(r => r.status === 'principal_review');
+  const completed = requests.filter(r => ['ready', 'downloaded'].includes(r.status));
 
   if (!employeeDetails || (employeeDetails.department !== 'Administration' && employeeDetails.designation !== 'Clerk')) {
     return (
@@ -715,9 +712,9 @@ export default function ClerkDocumentRequestsPage() {
 
 function RequestCard({ request, onForward, onInfo, onIssue, readOnly, showDownload }: any) {
   let statusColor = "bg-secondary text-secondary-foreground";
-  if (request.current_stage === 'clerk_issuing') statusColor = "bg-blue-100 text-blue-800 border-blue-200";
-  if (request.current_stage === 'principal_review') statusColor = "bg-yellow-100 text-yellow-800 border-yellow-200";
-  if (['ready', 'downloaded'].includes(request.current_stage)) statusColor = "bg-green-100 text-green-800 border-green-200";
+  if (request.status === 'clerk_issuing') statusColor = "bg-blue-100 text-blue-800 border-blue-200";
+  if (request.status === 'principal_review') statusColor = "bg-yellow-100 text-yellow-800 border-yellow-200";
+  if (['ready', 'downloaded'].includes(request.status)) statusColor = "bg-green-100 text-green-800 border-green-200";
 
   return (
     <Card>
@@ -731,7 +728,7 @@ function RequestCard({ request, onForward, onInfo, onIssue, readOnly, showDownlo
                 <p className="text-sm text-muted-foreground mt-1">Parent: {request.parents?.name} ({request.parents?.contact_number || request.parents?.email})</p>
               </div>
               <div className="flex flex-col items-end gap-2">
-                <Badge variant="outline" className={statusColor}>{request.current_stage.replace('_', ' ').toUpperCase()}</Badge>
+                <Badge variant="outline" className={statusColor}>{request.status.replace('_', ' ').toUpperCase()}</Badge>
                 <Badge variant="outline" className="font-mono">{request.document_type}</Badge>
               </div>
             </div>
@@ -744,7 +741,7 @@ function RequestCard({ request, onForward, onInfo, onIssue, readOnly, showDownlo
               </div>
             </div>
 
-            {request.clerk_note && request.current_stage !== 'clerk_review' && (
+            {request.clerk_note && request.status !== 'clerk_review' && (
               <div className="text-sm italic text-muted-foreground">Your Note: {request.clerk_note}</div>
             )}
 
@@ -754,7 +751,7 @@ function RequestCard({ request, onForward, onInfo, onIssue, readOnly, showDownlo
           </div>
 
           <div className="flex md:flex-col gap-2 w-full md:w-auto mt-4 md:mt-0 md:min-w-[200px]">
-            {request.current_stage === 'clerk_review' && onForward && onInfo && (
+            {request.status === 'clerk_review' && onForward && onInfo && (
               <>
                 <Button variant="default" className="flex-1 md:w-full bg-blue-600 hover:bg-blue-700 text-white shadow-sm" onClick={onForward}>
                   <ArrowRight className="w-4 h-4 mr-2" /> Review & Forward
@@ -764,7 +761,7 @@ function RequestCard({ request, onForward, onInfo, onIssue, readOnly, showDownlo
                 </Button>
               </>
             )}
-            {request.current_stage === 'clerk_issuing' && onIssue && (
+            {request.status === 'clerk_issuing' && onIssue && (
               <Button variant="default" className="flex-1 md:w-full bg-green-600 hover:bg-green-700 text-white shadow-sm" onClick={onIssue}>
                 <FileCheck className="w-4 h-4 mr-2" /> Generate & Issue
               </Button>

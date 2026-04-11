@@ -22,7 +22,7 @@ export interface RemarkRecord {
 
 export interface DocRequestRecord {
   id: string;
-  current_stage: string;
+  status: string;
 }
 
 export interface FeeRecord {
@@ -186,7 +186,7 @@ export function useParentAnalytics(studentId?: string, classId?: string) {
       if (!studentId) return [];
       const { data, error } = await (supabase as any)
         .from('document_requests')
-        .select('id, current_stage')
+        .select('id, status')
         .eq('student_id', studentId);
       if (error) throw error;
       return (data || []) as DocRequestRecord[];

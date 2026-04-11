@@ -86,12 +86,12 @@ export function useStudyMaterials(classId?: string) {
     queryKey: ['teacher-employee-record', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data } = await (supabase as any)
-        .from('employees')
-        .select('id, subjects_assigned, classes_assigned')
+      const { data } = await supabase
+        .from('teachers')
+        .select('id, subject')
         .eq('user_id', user.id)
         .maybeSingle();
-      return data as { id: string; subjects_assigned: string[]; classes_assigned: string[] } | null;
+      return data as { id: string; subject: string } | null;
     },
     enabled: !!user?.id,
   });

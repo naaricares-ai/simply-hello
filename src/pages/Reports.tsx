@@ -252,13 +252,18 @@ function StaffReport({ schoolName, generatedBy }: { schoolName: string; generate
     const { data, isLoading } = useQuery({
         queryKey: ['report-staff'],
         queryFn: async () => {
-            // employees table has full_name directly — no profile join needed
-            const { data, error } = await (supabase as any)
-                .from('employees')
-                .select('id, full_name, designation, department, employee_type, contact_number, status, date_of_joining')
-                .order('full_name');
+            const { data: profilesData } = await supabase.from('profiles').select('user_id, full_name');
+            const { data: teachersData, error } = await supabase
+                .from('teachers')
+                .select('id, user_id, designation, department, employee_type, contact_number, status, joining_date')
+                .order('joining_date');
             if (error) throw error;
-            return data as any[];
+            const profiles = profilesData || [];
+            return (teachersData || []).map((t: any) => ({
+                ...t,
+                full_name: profiles.find((p: any) => p.user_id === t.user_id)?.full_name || 'Unknown',
+                date_of_joining: t.joining_date,
+            })) as any[];
         },
     });
     const staff = data || [];

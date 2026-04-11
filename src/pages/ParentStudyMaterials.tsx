@@ -265,10 +265,10 @@ export default function ParentStudyMaterials() {
                         <Calendar className="w-3 h-3" />
                         {format(new Date(m.material_date), 'dd MMM yyyy')}
                       </span>
-                      {(m as any).employees?.full_name && (
+                      {(m as any).teachers?.subject && (
                         <span className="hidden sm:flex items-center gap-1">
                           <GraduationCap className="w-3 h-3" />
-                          {(m as any).employees.full_name}
+                          {(m as any).teachers.subject}
                         </span>
                       )}
                     </div>

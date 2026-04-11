@@ -42,9 +42,9 @@ export default function PrincipalDocumentApprovals() {
     const fetchEmployeeAndRequests = async () => {
       if (!user?.id) return;
       try {
-        const { data: emp } = await (supabase as any)
-          .from('employees')
-          .select('id, full_name, designation, department')
+        const { data: emp } = await supabase
+          .from('teachers')
+          .select('id, designation, department')
           .eq('user_id', user.id)
           .maybeSingle();
           
@@ -139,13 +139,8 @@ export default function PrincipalDocumentApprovals() {
       const { error } = await (supabase as any)
         .from('document_requests')
         .update({
-          current_stage: 'clerk_issuing',
-          status: 'pending', // internal status backward compatibility
-          principal_signed_at: new Date().toISOString(),
-          principal_id: employeeDetails?.id || null,
-          principal_note: principalNote.trim() || null,
-          principal_signature_data: signatureData,
-          returned_to_clerk_at: new Date().toISOString(),
+          status: 'pending',
+          admin_note: principalNote.trim() || null,
         })
         .eq('id', signDialog.id);
 
@@ -189,8 +184,8 @@ export default function PrincipalDocumentApprovals() {
       const { error } = await (supabase as any)
         .from('document_requests')
         .update({
-          current_stage: 'clerk_review',
-          clerk_note: `Returned by Principal: ${returnReason}`,
+          status: 'submitted',
+          admin_note: `Returned by Principal: ${returnReason}`,
         })
         .eq('id', returnDialog.id);
 
@@ -250,8 +245,8 @@ export default function PrincipalDocumentApprovals() {
     );
   }
 
-  const pendingSignature = requests.filter(r => r.current_stage === 'principal_review');
-  const previouslySigned = requests.filter(r => r.principal_signed_at != null && r.current_stage !== 'principal_review');
+  const pendingSignature = requests.filter(r => r.status === 'principal_review');
+  const previouslySigned = requests.filter(r => r.principal_signed_at != null && r.status !== 'principal_review');
 
   return (
     <div className="space-y-6 animate-fade-up max-w-[1200px] mx-auto py-6">
@@ -329,7 +324,7 @@ export default function PrincipalDocumentApprovals() {
                       <h3 className="font-semibold text-sm">{request.students?.full_name}</h3>
                       <p className="text-xs text-muted-foreground">{request.document_type} • Signed: {new Date(request.principal_signed_at).toLocaleDateString()}</p>
                       <div className="mt-1">
-                        <Badge variant="outline" className="text-[10px]">{request.current_stage.replace('_', ' ').toUpperCase()}</Badge>
+                        <Badge variant="outline" className="text-[10px]">{request.status.replace('_', ' ').toUpperCase()}</Badge>
                       </div>
                     </div>
                   </CardContent>

@@ -72,8 +72,8 @@ export function useCurrentTeacherId() {
     queryKey: ['current-teacher-id', user?.id],
     enabled: !!user?.id,
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('employees')
+      const { data, error } = await supabase
+        .from('teachers')
         .select('id')
         .eq('user_id', user!.id)
         .eq('status', 'Active')
