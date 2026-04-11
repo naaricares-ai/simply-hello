@@ -432,9 +432,7 @@ async function requestDocumentFn(
       parent_id: parentId,
       document_type: input.document_type,
       purpose: input.purpose,
-      current_stage: stage,
-      status: stage,
-      assigned_clerk_id: clerkData?.id || null,
+      status: 'submitted',
       requested_at: new Date().toISOString(),
     })
     .select()
