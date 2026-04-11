@@ -22,7 +22,7 @@ export interface RemarkRecord {
 
 export interface DocRequestRecord {
   id: string;
-  current_stage: string;
+  status: string;
 }
 
 export interface FeeRecord {
