@@ -161,7 +161,7 @@ serve(async (req) => {
     // Insert role (trigger no longer does this)
     const { error: roleError } = await supabaseAdmin
       .from('user_roles')
-      .upsert({ user_id: userId, role: 'parent' }, { onConflict: 'user_id,role' });
+      .upsert({ user_id: userId, role: 'parent' }, { onConflict: 'user_id' });
     if (roleError) console.error('Role insert error:', roleError);
 
     // Create parent record
